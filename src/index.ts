@@ -5,7 +5,7 @@ import {
   DynamoDBClientConfig,
   KeySchemaElement,
 } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, TransactWriteCommandInput, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
 import deleteItem from "./CRUD/delete";
 import getItem from "./CRUD/get";
 import createItem from "./CRUD/put";
@@ -13,7 +13,14 @@ import queryItems from "./CRUD/query";
 import getAllItems from "./CRUD/scan";
 import transactWrite from "./CRUD/transactWrite";
 import updateItem from "./CRUD/update";
-import { DeleteItemInput, GetItemInput, PutItemInput, QueryInput, ScanInput, UpdateItemInput } from "./types";
+import {
+  DeleteItemInput,
+  GetItemInput,
+  PutItemInput,
+  QueryInput,
+  ScanInput,
+  IDLWrappedOptions,
+} from "./types";
 
 const defaultDocOptions = { marshallOptions: { removeUndefinedValues: true } };
 
@@ -29,7 +36,7 @@ interface IIndex {
 }
 
 export class Table {
-  public static transactWrite(transactions: any, options = { verbose: false }) {
+  public static transactWrite(transactions: TransactWriteCommandInput["TransactItems"], options = { verbose: false }) {
     const { verbose } = options;
     return transactWrite({ docClient, transactions, options, verbose });
   }
@@ -66,7 +73,7 @@ export class Table {
     const tableInfo: DescribeTableCommandOutput = await this.dbClient.send(
       new DescribeTableCommand({
         TableName: this.tableName,
-      })
+      }),
     );
     this.initialized = true;
     /**
@@ -95,7 +102,7 @@ export class Table {
    * Check if the key is valid for this table
    * @param {} key
    */
-  public isValidKey(key: any) {
+  public isValidKey(key: Record<string, unknown>) {
     if (!this.partitionKey) {
       return false;
     }
@@ -115,7 +122,7 @@ export class Table {
     return noExtraField && containsPartitionKey;
   }
 
-  public async get(key: object | string, options: GetItemInput = {}) {
+  public async get(key: Record<string, unknown> | string, options: IDLWrappedOptions<GetItemInput> = {}) {
     if (!this.initialized) {
       await this.initTable();
     }
@@ -133,7 +140,7 @@ export class Table {
     return getItem({ docClient: this.docClient, tableName: this.tableName, key, options, verbose, forTrx });
   }
 
-  public async put(item: any, options: PutItemInput = {}) {
+  public async put(item: unknown, options: IDLWrappedOptions<PutItemInput> = {}) {
     if (!this.initialized) {
       await this.initTable();
     }
@@ -150,7 +157,7 @@ export class Table {
     });
   }
 
-  public async delete(key: any, options: DeleteItemInput = {}) {
+  public async delete(key: string | Record<string, unknown>, options: IDLWrappedOptions<DeleteItemInput> = {}) {
     if (!this.initialized) {
       await this.initTable();
     }
@@ -168,7 +175,11 @@ export class Table {
     return deleteItem({ docClient: this.docClient, tableName: this.tableName, key, options, verbose, forTrx });
   }
 
-  public async update(key: any, newFields: any, options: UpdateItemInput = {}) {
+  public async update(
+    key: string | Record<string, unknown>,
+    newFields: Record<string, unknown>,
+    options: IDLWrappedOptions<UpdateCommandInput> & { createIfNotExist?: boolean } = {},
+  ) {
     if (!this.initialized) {
       await this.initTable();
     }
@@ -199,12 +210,12 @@ export class Table {
     // queryKey: { indexName?: string; partitionKeyValue: string; sortKeyOperator?: string; sortKeyValue?: string },
     queryKey: {
       indexName?: string;
-      partitionKeyValue?: any;
+      partitionKeyValue?: unknown;
       sortKeyOperator?: string;
-      sortKeyValue?: any;
-      [key: string]: any;
+      sortKeyValue?: unknown;
+      [key: string]: unknown;
     },
-    options: QueryInput = {}
+    options: IDLWrappedOptions<QueryInput> = {},
   ) {
     if (!this.initialized) {
       await this.initTable();
@@ -263,11 +274,14 @@ export class Table {
     });
   }
 
-  public async scan(param: any = {}, options: ScanInput = {}) {
+  public async scan(
+    param: { [key: string]: unknown; indexName?: string } = {},
+    options: IDLWrappedOptions<ScanInput> = {},
+  ) {
     if (!this.initialized) {
       await this.initTable();
     }
-    const { indexName, filters } = param;
+    const { indexName } = param;
 
     const { verbose, pagination } = this.retrieveAndDeleteDLOptions(options);
 
@@ -298,7 +312,7 @@ export class Table {
     return { partitionKey, sortKey };
   }
 
-  private parsePartitionKey(partitionKeyValue: string): object {
+  private parsePartitionKey(partitionKeyValue: string) {
     return {
       [this.partitionKey as string]: partitionKeyValue,
     };

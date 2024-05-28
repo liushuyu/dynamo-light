@@ -1,4 +1,4 @@
-import { DynamoDBClient, DynamoDBClientConfig } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient, DynamoDBClientConfig, Select } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { Table } from "../../src/index";
 
@@ -49,7 +49,11 @@ test("scan with options: FilterExpression", async () => {
 });
 
 test("scan with options: AttributesToGet and Limit", async () => {
-  const options = {
+  const options: {
+    AttributesToGet: string[];
+    Select: Select;
+    Limit: number;
+  } = {
     AttributesToGet: ["fileExtension", "transcribedAt"],
     Select: "SPECIFIC_ATTRIBUTES",
     Limit: 5,

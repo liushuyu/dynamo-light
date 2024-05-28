@@ -3,7 +3,7 @@ import { IDLArgumentsBase } from "../types";
 
 interface IDLDelete extends IDLArgumentsBase<DeleteCommandInput> {
   forTrx: boolean;
-  key: any;
+  key: unknown;
 }
 
 /**

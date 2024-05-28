@@ -5,11 +5,11 @@ import { buildKeyConditionExpressions, concatBatchFetchResult, mergeOptions } fr
 interface IDLQuery extends IDLArgumentsBase<QueryCommandInput> {
   indexName: string | undefined;
   pagination: boolean;
-  partitionKey: any;
-  partitionKeyValue: any;
-  sortKey: any;
+  partitionKey: string | undefined;
+  partitionKeyValue: unknown;
+  sortKey: string | undefined;
   sortKeyOperator: string | undefined;
-  sortKeyValue: any;
+  sortKeyValue: unknown;
 }
 
 export default async function query({
@@ -90,7 +90,7 @@ export default async function query({
       console.error(
         `Unable to query items from ${tableName}. Error JSON:`,
         JSON.stringify(error),
-        (error as any).stack
+        (error as Error).stack
       );
       console.log("params", JSON.stringify(params));
     }

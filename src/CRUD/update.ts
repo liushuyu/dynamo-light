@@ -9,8 +9,8 @@ interface IDLUpdateOptions extends UpdateCommandInput {
 }
 
 interface IDLUpdate extends IDLArgumentsBase<IDLUpdateOptions> {
-  key: any;
-  newFields: any;
+  key: unknown;
+  newFields: Record<string, unknown>;
   forTrx?: boolean;
   autoTimeStamp?: boolean;
 }
@@ -95,7 +95,7 @@ export default async function update({
       console.error(
         `Unable to update in table ${tableName} for the following fields: ${JSON.stringify(rawNewFields)}`,
         JSON.stringify(err),
-        (err as any).stack
+        (err as Error).stack
       );
       console.log("Error request params: ", JSON.stringify(params));
     }

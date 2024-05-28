@@ -4,7 +4,7 @@ import { concatBatchFetchResult } from "../utils/helper";
 
 interface IDLScan extends IDLArgumentsBase<ScanCommandInput> {
   pagination: boolean;
-  indexName: string;
+  indexName: string | undefined;
 }
 
 /**
@@ -51,7 +51,7 @@ export default async function getAll({
       console.error(
         `Unable to get all items from ${tableName}. Error JSON:`,
         JSON.stringify(error),
-        (error as { stack: any }).stack
+        (error as Error).stack
       );
       console.log("params", JSON.stringify(params));
     }

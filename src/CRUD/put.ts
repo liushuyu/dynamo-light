@@ -1,10 +1,10 @@
-import { PutCommand, PutCommandInput } from "@aws-sdk/lib-dynamodb";
+import { NativeAttributeValue, PutCommand, PutCommandInput } from "@aws-sdk/lib-dynamodb";
 import { IDLArgumentsBase } from "../types";
 
 interface IDLPut extends IDLArgumentsBase<PutCommandInput> {
   autoTimeStamp?: boolean;
   forTrx?: boolean;
-  item: any;
+  item: unknown;
 }
 
 /**
@@ -19,9 +19,13 @@ export default async function create({
   forTrx = false,
   autoTimeStamp = false,
 }: IDLPut) {
-  const item = {
-    ...rawItem,
-  };
+  /**
+   * Param verification
+   */
+  if (typeof rawItem !== "object" || rawItem === null) {
+    throw new Error("Item is not an object!");
+  }
+  const item = structuredClone(rawItem) as Record<string, NativeAttributeValue>;
   if (autoTimeStamp) {
     const timeStamp = Date.now();
     item.createdAt = timeStamp;
@@ -54,7 +58,7 @@ export default async function create({
     return params;
   } catch (err) {
     if (verbose) {
-      console.error(`Unable to insert item into ${tableName}. Error JSON:`, JSON.stringify(err), (err as any).stack);
+      console.error(`Unable to insert item into ${tableName}. Error JSON:`, JSON.stringify(err), (err as Error).stack);
       console.log("params", JSON.stringify(params));
     }
     throw err;

@@ -1,4 +1,4 @@
-import { DynamoDBClient, DynamoDBClientConfig } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient, DynamoDBClientConfig, ReturnValue } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import Big from "big.js";
 import { Table } from "../../src/index";
@@ -114,7 +114,7 @@ test("using atomic counter for float value guarded by condition expression - upd
 
     const promises: any = [];
     const concurrentCount = 10;
-    for (let i = 0; i < concurrentCount; i += 1) {
+    for (let i = 0; i < concurrentCount; i++) {
       promises.push(tableWithPrimaryKey.update(simpleKey, newFields, options));
     }
     await Promise.all(promises);
@@ -134,7 +134,9 @@ test("change RETURN VALUES to see if it causes error", async () => {
   const newFields = {
     operatorId: "a new change",
   };
-  const options = {
+  const options: {
+    ReturnValues: ReturnValue
+  } = {
     ReturnValues: "ALL_OLD",
   };
   const data = await tableWithSortKey.update(composedKey, newFields, options);

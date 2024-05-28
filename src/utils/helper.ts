@@ -46,7 +46,7 @@ export function concatBatchFetchResult(prevResult: QueryCommandOutput | undefine
  * Get params for DynamoDB table update calls
  * @param newFields
  */
-export function getUpdateExpression(newFields: { [key: string]: any }) {
+export function getUpdateExpression(newFields: Record<string, unknown>) {
   let UpdateExpression = "";
   /**
    * Separate null and non-null fields,
@@ -54,9 +54,9 @@ export function getUpdateExpression(newFields: { [key: string]: any }) {
    * for fields that starts with + use ADD
    * for other non-null fields use SET,
    */
-  const nullFields: { [key: string]: null } = {};
-  const addFields: { [key: string]: any } = {};
-  const nonNullFields: { [key: string]: NonNullable<any> } = {};
+  const nullFields: Record<string, null> = {};
+  const addFields: Record<string, unknown> = {};
+  const nonNullFields: Record<string, unknown> = {};
   Object.keys(newFields).forEach((field) => {
     if (newFields[field] === null || newFields[field] === undefined) {
       nullFields[field] = null;
@@ -106,8 +106,8 @@ export function getUpdateExpression(newFields: { [key: string]: any }) {
   return UpdateExpression;
 }
 
-function removePlusFromFieldNames(rawNewFields: { [key: string]: any }) {
-  const newFields: { [key: string]: any } = {};
+function removePlusFromFieldNames(rawNewFields: Record<string, unknown>) {
+  const newFields: Record<string, unknown> = {};
   Object.keys(rawNewFields).forEach((field) => {
     if (field.startsWith("+")) {
       newFields[field.substring(1)] = rawNewFields[field];
@@ -118,18 +118,18 @@ function removePlusFromFieldNames(rawNewFields: { [key: string]: any }) {
   return newFields;
 }
 
-export function getExpressionAttributeNames(rawNewFields: { [key: string]: any }) {
+export function getExpressionAttributeNames(rawNewFields: Record<string, unknown>) {
   const newFields = removePlusFromFieldNames(rawNewFields);
-  const ExpressionAttributeNames: { [key: string]: string } = {};
+  const ExpressionAttributeNames: Record<string, string> = {};
   for (const fieldKey of Object.keys(newFields)) {
     ExpressionAttributeNames[`#${fieldKey}`] = fieldKey;
   }
   return ExpressionAttributeNames;
 }
 
-export function getExpressionAttributeValues(rawNewFields: { [key: string]: any }, sortKeyOperator?: string) {
+export function getExpressionAttributeValues(rawNewFields: Record<string, unknown>, sortKeyOperator?: string) {
   const newFields = removePlusFromFieldNames(rawNewFields);
-  const ExpressionAttributeValues: { [key: string]: any } = {};
+  const ExpressionAttributeValues: Record<string, unknown> = {};
   const operatorIsBetween = typeof sortKeyOperator === "string" && sortKeyOperator.toLowerCase() === "between";
   let foundSortKey = false;
 
@@ -159,7 +159,7 @@ function getKeyConditionExpression({
   sortKeyOperator: rawSortKeyOperator,
 }: {
   partitionKey: string;
-  sortKey: string;
+  sortKey: string | undefined;
   sortKeyOperator: string | undefined;
 }) {
   const partitionKeyExpression = `#${partitionKey} = :${partitionKey}`;
@@ -216,12 +216,12 @@ export function buildKeyConditionExpressions({
   sortKeyValue,
 }: {
   partitionKey: string;
-  partitionKeyValue: any;
-  sortKey: string;
+  partitionKeyValue: unknown;
+  sortKey: string | undefined;
   sortKeyOperator: string | undefined;
-  sortKeyValue: any;
+  sortKeyValue: unknown;
 }) {
-  const keyValueObj: { [key: string]: any } = {};
+  const keyValueObj: Record<string, unknown> = {};
   keyValueObj[partitionKey] = partitionKeyValue;
   if (sortKey) {
     keyValueObj[sortKey] = sortKeyValue;
@@ -246,17 +246,23 @@ function combineExpressions(exp1: string, exp2: string) {
   return validExps.join(" AND ");
 }
 
+interface IDLOptions {
+  [key: string]: string | undefined | unknown;
+  ExpressionAttributeNames?: Record<string, string>;
+  ExpressionAttributeValues?: Record<string, unknown>;
+}
+
 /**
  * Merge dynamodb options
  * Supports merging all dyanmodb expressions (filter, keyCondition, etc) and ExpressionAttributeNames, ExpressionAttributeValues,
  * For all the other params: opt2 will overwrite opt1
  */
-export function mergeOptions(opt1: { [key: string]: any }, opt2: { [key: string]: any }) {
+export function mergeOptions<T1 extends IDLOptions, T2 extends IDLOptions>(opt1: T1, opt2: T2) {
   if (!opt1) {
-    return opt2;
+    return opt2 as (T1 & T2);
   }
   if (!opt2) {
-    return opt1;
+    return opt1 as (T1 & T2);
   }
 
   /**
@@ -275,7 +281,7 @@ export function mergeOptions(opt1: { [key: string]: any }, opt2: { [key: string]
   /**
    * Combine Expressions
    */
-  function getAllExpressionNames(opt: { [key: string]: any }) {
+  function getAllExpressionNames(opt: Record<string, unknown>) {
     const keys = Object.keys(opt);
     return keys ? keys.filter((key) => key.slice(-10) === "Expression") : [];
   }
@@ -283,9 +289,12 @@ export function mergeOptions(opt1: { [key: string]: any }, opt2: { [key: string]
   const expressionNameSet = new Set([...getAllExpressionNames(opt1), ...getAllExpressionNames(opt2)]);
   const expressionNames = Array.from(expressionNameSet);
 
-  const combinedExpressions: { [key: string]: string } = {};
+  const combinedExpressions: Record<string, string> = {};
   expressionNames.forEach((expName) => {
-    combinedExpressions[expName] = combineExpressions(opt1[expName], opt2[expName]);
+    const lhs = opt1[expName];
+    const rhs = opt2[expName];
+    if (typeof lhs === "string" && typeof rhs === "string")
+      combinedExpressions[expName] = combineExpressions(lhs, rhs);
   });
 
   return {
@@ -305,13 +314,14 @@ export function mergeOptions(opt1: { [key: string]: any }, opt2: { [key: string]
  * Prepare args to be ready for inserting into DynamoDB
  * @param args
  */
-export function removeInvalidArgs(args: any[]) {
-  const newArgs = [...args];
+export function removeInvalidArgs(args: Readonly<Record<string, unknown>>) {
+  const newArgs = structuredClone(args) as Record<string, unknown>;
   for (const key in args) {
-    const isEmptyString = typeof args[key] === "string" && args[key].length === 0;
-    const isNull = args[key] === null;
+    const value = args[key];
+    const isEmptyString = (typeof value === "string") && value.length === 0;
+    const isNull = value === null;
     if (isNull || isEmptyString) {
-      newArgs[key] = undefined;
+      delete newArgs[key];
     }
   }
   return newArgs;

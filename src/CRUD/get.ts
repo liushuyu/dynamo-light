@@ -3,7 +3,7 @@ import { ResponseMetadata } from "@aws-sdk/types/dist-types/response";
 import { IDLArgumentsBase } from "../types";
 
 interface IDLGet extends IDLArgumentsBase<GetCommandInput> {
-  key: any;
+  key: unknown;
   forTrx: boolean;
 }
 
@@ -63,7 +63,7 @@ export default async function get({
     return data;
   } catch (err) {
     if (verbose) {
-      console.error(`Unable to get item from ${tableName}. Error JSON:`, JSON.stringify(err), (err as any).stack);
+      console.error(`Unable to get item from ${tableName}. Error JSON:`, JSON.stringify(err), (err as Error).stack);
       console.log("Error request params: ", JSON.stringify(params));
     }
     throw err;

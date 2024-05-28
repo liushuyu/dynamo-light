@@ -1,11 +1,7 @@
 import { TransactWriteCommand, TransactWriteCommandInput, TransactWriteCommandOutput } from "@aws-sdk/lib-dynamodb";
 import { IDLArgumentsBase } from "../types";
 
-type IDLTrxWriteOptionBase = Omit<TransactWriteCommandInput, "TransactItems">;
-
-interface IDLTrxWriteOptions extends IDLTrxWriteOptionBase {
-  verbose?: boolean;
-}
+type IDLTrxWriteOptions = Omit<TransactWriteCommandInput, "TransactItems"> & { verbose?: boolean };
 
 interface IDLTrxWrite extends IDLArgumentsBase<IDLTrxWriteOptions> {
   transactions: TransactWriteCommandInput["TransactItems"];
@@ -40,7 +36,7 @@ export default async function transactWrite({
       console.error(
         `Unable to perform transact write operation ${JSON.stringify(transactions)}. Error JSON:`,
         JSON.stringify(err),
-        (err as any).stack
+        (err as Error).stack
       );
       console.log("params", JSON.stringify(params));
     }
