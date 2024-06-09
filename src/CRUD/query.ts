@@ -30,7 +30,7 @@ export default async function query({
    */
   if (!partitionKey || !partitionKeyValue) {
     throw new Error(
-      `Query fail: argument partitionKey - ${partitionKey} or partitionKeyValue ${partitionKeyValue} is invalid`
+      `Query fail: argument partitionKey - ${partitionKey} or partitionKeyValue ${partitionKeyValue} is invalid`,
     );
   }
   if (sortKey) {
@@ -56,7 +56,7 @@ export default async function query({
       ...(indexName && { IndexName: indexName }),
       ...keyConditionExpressions,
     },
-    options
+    options,
   );
   if (verbose) {
     console.log("params", params);
@@ -90,7 +90,7 @@ export default async function query({
       console.error(
         `Unable to query items from ${tableName}. Error JSON:`,
         JSON.stringify(error),
-        (error as Error).stack
+        (error as Error).stack,
       );
       console.log("params", JSON.stringify(params));
     }

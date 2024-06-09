@@ -135,7 +135,7 @@ test("change RETURN VALUES to see if it causes error", async () => {
     operatorId: "a new change",
   };
   const options: {
-    ReturnValues: ReturnValue
+    ReturnValues: ReturnValue;
   } = {
     ReturnValues: "ALL_OLD",
   };

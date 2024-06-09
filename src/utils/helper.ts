@@ -259,10 +259,10 @@ interface IDLOptions {
  */
 export function mergeOptions<T1 extends IDLOptions, T2 extends IDLOptions>(opt1: T1, opt2: T2) {
   if (!opt1) {
-    return opt2 as (T1 & T2);
+    return opt2 as T1 & T2;
   }
   if (!opt2) {
-    return opt1 as (T1 & T2);
+    return opt1 as T1 & T2;
   }
 
   /**
@@ -293,8 +293,7 @@ export function mergeOptions<T1 extends IDLOptions, T2 extends IDLOptions>(opt1:
   expressionNames.forEach((expName) => {
     const lhs = opt1[expName];
     const rhs = opt2[expName];
-    if (typeof lhs === "string" && typeof rhs === "string")
-      combinedExpressions[expName] = combineExpressions(lhs, rhs);
+    if (typeof lhs === "string" && typeof rhs === "string") combinedExpressions[expName] = combineExpressions(lhs, rhs);
   });
 
   return {
@@ -318,7 +317,7 @@ export function removeInvalidArgs(args: Readonly<Record<string, unknown>>) {
   const newArgs = structuredClone(args) as Record<string, unknown>;
   for (const key in args) {
     const value = args[key];
-    const isEmptyString = (typeof value === "string") && value.length === 0;
+    const isEmptyString = typeof value === "string" && value.length === 0;
     const isNull = value === null;
     if (isNull || isEmptyString) {
       delete newArgs[key];

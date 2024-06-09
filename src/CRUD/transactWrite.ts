@@ -36,7 +36,7 @@ export default async function transactWrite({
       console.error(
         `Unable to perform transact write operation ${JSON.stringify(transactions)}. Error JSON:`,
         JSON.stringify(err),
-        (err as Error).stack
+        (err as Error).stack,
       );
       console.log("params", JSON.stringify(params));
     }

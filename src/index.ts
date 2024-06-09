@@ -13,14 +13,7 @@ import queryItems from "./CRUD/query";
 import getAllItems from "./CRUD/scan";
 import transactWrite from "./CRUD/transactWrite";
 import updateItem from "./CRUD/update";
-import {
-  DeleteItemInput,
-  GetItemInput,
-  PutItemInput,
-  QueryInput,
-  ScanInput,
-  IDLWrappedOptions,
-} from "./types";
+import { DeleteItemInput, GetItemInput, PutItemInput, QueryInput, ScanInput, IDLWrappedOptions } from "./types";
 
 const defaultDocOptions = { marshallOptions: { removeUndefinedValues: true } };
 

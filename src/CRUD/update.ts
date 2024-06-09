@@ -70,7 +70,7 @@ export default async function update({
         ...(!createIfNotExist && { ConditionExpression }),
         ReturnValues,
       },
-      options
+      options,
     );
     if (verbose) {
       console.log("params", params);
@@ -95,7 +95,7 @@ export default async function update({
       console.error(
         `Unable to update in table ${tableName} for the following fields: ${JSON.stringify(rawNewFields)}`,
         JSON.stringify(err),
-        (err as Error).stack
+        (err as Error).stack,
       );
       console.log("Error request params: ", JSON.stringify(params));
     }
